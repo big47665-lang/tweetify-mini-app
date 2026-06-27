@@ -1,19 +1,24 @@
 import { useState, useEffect } from 'react';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState('trending');
+  const [theme, setTheme] = useState(null); // null = intro, 'silver' or 'liquid'
+  const [activeTab, setActiveTab] = useState('home');
   const [isDark, setIsDark] = useState(true);
-  const [notification, setNotification] = useState('');
-  const [tweets, setTweets] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [tweets, setTweets] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
       window.Telegram.WebApp.ready();
       window.Telegram.WebApp.expand();
     }
-    fetchTweets();
   }, []);
+
+  useEffect(() => {
+    if (theme && activeTab === 'home') {
+      fetchTweets();
+    }
+  }, [theme, activeTab]);
 
   const fetchTweets = async () => {
     setLoading(true);
@@ -21,352 +26,318 @@ export default function Home() {
       const response = await fetch('/api/tweets');
       if (response.ok) {
         const data = await response.json();
-        setTweets(data);
-        setNotification('✨ Fresh tweets loaded!');
-        setTimeout(() => setNotification(''), 2500);
+        setTweets(data.worldTrending || []);
       }
     } catch (error) {
       console.error('Fetch error:', error);
-      // Show dummy data if API fails
-      setTweets({
-        worldTrending: [
-          { id: 1, user: '@BBCBreaking', name: 'BBC Breaking', text: 'Latest breaking news', time: 'now', likes: 45000, retweets: 18000, views: '2.1M' },
-          { id: 2, user: '@Reuters', name: 'Reuters', text: 'Major developments happening', time: '5 min ago', likes: 32000, retweets: 14000, views: '1.4M' },
-        ],
-        iranTimeline: [
-          { id: 10, user: '@IranIntl_Fa', name: 'Iran International', text: 'اخبار فوری', time: '2 min ago', likes: 21000, retweets: 9500, views: '1.1M' },
-          { id: 11, user: '@bbcpersian', name: 'BBC Persian', text: 'توضیحات روز', time: '8 min ago', likes: 18500, retweets: 8000, views: '900K' },
-        ],
-        news: [
-          { id: 20, user: '@BreakingNews', name: 'Breaking News', text: 'Today top stories', time: '1 min ago', likes: 56000, retweets: 22000, views: '3.2M' },
-        ],
-      });
     }
     setLoading(false);
   };
 
+  // ═══════════════════════════════════════════════════════════════
+  // INTRO SCREEN
+  // ═══════════════════════════════════════════════════════════════
+
+  if (!theme) {
+    return (
+      <div style={{
+        background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%)',
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px',
+        color: '#fff',
+        fontFamily: "'Segoe UI', sans-serif",
+      }}>
+        <style jsx>{`
+          @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+          }
+          .logo-text {
+            font-size: 48px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: float 3s ease-in-out infinite;
+            margin-bottom: 20px;
+            letter-spacing: -2px;
+          }
+          .subtitle {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 60px;
+            text-align: center;
+          }
+          .theme-btn {
+            width: 100%;
+            max-width: 280px;
+            padding: 20px;
+            margin: 12px 0;
+            background: rgba(255, 255, 255, 0.06);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 16px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+          }
+          .theme-btn:hover {
+            background: rgba(0, 212, 255, 0.15);
+            border-color: #00d4ff;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+            transform: translateY(-2px);
+          }
+          .theme-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+          }
+          .theme-desc {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+          }
+        `}</style>
+
+        <div className="logo-text">Tweetify</div>
+        <div className="subtitle">✨ Choose Your Theme ✨</div>
+
+        <button 
+          className="theme-btn"
+          onClick={() => setTheme('silver')}
+          style={{ marginTop: '40px' }}
+        >
+          <div className="theme-icon">🌙</div>
+          <div>Silver Tweets</div>
+          <div className="theme-desc">Y2K Glossy • Dark Mode Only</div>
+        </button>
+
+        <button 
+          className="theme-btn"
+          onClick={() => setTheme('liquid')}
+        >
+          <div className="theme-icon">💧</div>
+          <div>Liquid Tweets</div>
+          <div className="theme-desc">Glass Effect • Day/Night Toggle</div>
+        </button>
+
+        <div style={{ fontSize: '12px', color: '#555', marginTop: '80px', textAlign: 'center' }}>
+          <div>Twitter to Telegram Bridge</div>
+          <div style={{ marginTop: '4px' }}>Real-time Tweet Updates</div>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // SILVER THEME (Y2K Glossy - Dark Mode Only)
+  // ═══════════════════════════════════════════════════════════════
+
+  if (theme === 'silver') {
+    return (
+      <div style={{
+        background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%)',
+        minHeight: '100vh',
+        color: '#fff',
+        fontFamily: "'Segoe UI', sans-serif",
+      }}>
+        <style jsx>{`
+          .header { padding: 16px; background: rgba(0, 0, 0, 0.6); border-bottom: 1px solid rgba(0, 212, 255, 0.1); }
+          .logo { font-size: 24px; font-weight: 900; text-align: center; background: linear-gradient(135deg, #00d4ff, #0099ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+          .category-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; }
+          .category-btn { padding: 16px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 12px; color: #fff; cursor: pointer; font-weight: 600; text-align: center; transition: all 0.3s; backdrop-filter: blur(10px); }
+          .category-btn:active { background: rgba(0, 212, 255, 0.15); border-color: #00d4ff; }
+          .heart { text-align: center; padding: 30px; font-size: 80px; }
+          .live-text { text-align: center; font-size: 18px; font-weight: 700; color: #00d4ff; letter-spacing: 2px; }
+          .trending { padding: 16px; }
+          .trending-title { font-size: 14px; font-weight: 700; color: #00d4ff; margin-bottom: 12px; }
+          .trending-item { background: rgba(255, 255, 255, 0.06); padding: 12px; border-radius: 8px; margin-bottom: 8px; font-size: 12px; color: #aaa; border-left: 3px solid #00d4ff; }
+          .nav { display: flex; justify-content: space-around; padding: 12px; border-top: 1px solid rgba(0, 212, 255, 0.1); position: sticky; bottom: 0; background: rgba(0, 0, 0, 0.8); }
+          .nav-btn { background: none; border: none; color: #666; cursor: pointer; font-size: 20px; transition: color 0.3s; }
+          .nav-btn.active { color: #00d4ff; }
+        `}</style>
+
+        <div className="header">
+          <div className="logo">Tweetify</div>
+        </div>
+
+        {activeTab === 'home' && (
+          <div>
+            <div className="category-grid">
+              <button className="category-btn">😂 Funny</button>
+              <button className="category-btn">🤪 Unhinged</button>
+              <button className="category-btn">🏛️ Political</button>
+              <button className="category-btn">➕ Extra</button>
+            </div>
+
+            <div className="heart">
+              <div style={{ fontSize: '60px', marginBottom: '10px' }}>💎</div>
+              <div className="live-text">LIVE TWEETS</div>
+            </div>
+
+            <div className="trending">
+              <div className="trending-title">📌 Trending Threads</div>
+              {loading ? (
+                <div style={{ color: '#666', textAlign: 'center', padding: '20px' }}>Loading tweets...</div>
+              ) : tweets.length > 0 ? (
+                tweets.slice(0, 3).map((tweet, idx) => (
+                  <div key={idx} className="trending-item">
+                    @{tweet.username} • {tweet.time}
+                  </div>
+                ))
+              ) : (
+                <div className="trending-item">No tweets available</div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'search' && <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>Search coming soon</div>}
+        {activeTab === 'notif' && <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>Notifications</div>}
+        {activeTab === 'profile' && <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>Profile</div>}
+
+        <div className="nav">
+          <button className={`nav-btn ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>🏠</button>
+          <button className={`nav-btn ${activeTab === 'search' ? 'active' : ''}`} onClick={() => setActiveTab('search')}>🔍</button>
+          <button className={`nav-btn ${activeTab === 'notif' ? 'active' : ''}`} onClick={() => setActiveTab('notif')}>🔔</button>
+          <button className={`nav-btn ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>👤</button>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // LIQUID THEME (Glass Effect - Dark/Light Mode)
+  // ═══════════════════════════════════════════════════════════════
+
   const colors = isDark ? {
     bg: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%)',
-    card: 'rgba(255, 255, 255, 0.06)',
-    cardBorder: 'rgba(200, 220, 255, 0.1)',
-    text: '#ffffff',
-    textSecondary: '#b0b0b0',
-    accent: 'linear-gradient(135deg, #00d4ff 0%, #0099ff 100%)',
-    accentLight: 'rgba(0, 212, 255, 0.1)',
+    card: 'rgba(255, 255, 255, 0.08)',
+    border: 'rgba(0, 212, 255, 0.2)',
+    text: '#fff',
+    textSecondary: '#aaa',
+    accent: '#00d4ff',
   } : {
     bg: 'linear-gradient(135deg, #f5f7fa 0%, #e8f0f7 100%)',
-    card: 'rgba(255, 255, 255, 0.8)',
-    cardBorder: 'rgba(100, 150, 255, 0.2)',
+    card: 'rgba(255, 255, 255, 0.7)',
+    border: 'rgba(0, 100, 200, 0.2)',
     text: '#1a1a1a',
-    textSecondary: '#666666',
-    accent: 'linear-gradient(135deg, #006fee 0%, #0099ff 100%)',
-    accentLight: 'rgba(0, 111, 238, 0.08)',
+    textSecondary: '#666',
+    accent: '#0066ff',
   };
-
-  const TweetCard = ({ tweet, topicColor = '#00d4ff' }) => (
-    <div style={{
-      background: colors.card,
-      border: `1.5px solid ${colors.cardBorder}`,
-      borderRadius: '16px',
-      padding: '14px',
-      margin: '10px 14px',
-      backdropFilter: 'blur(10px)',
-      boxShadow: isDark ? '0 8px 32px rgba(0, 212, 255, 0.08)' : '0 8px 32px rgba(0, 100, 200, 0.08)',
-      transition: 'all 0.3s ease',
-      cursor: 'pointer',
-    }}>
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '10px', alignItems: 'flex-start' }}>
-        <div style={{
-          width: '40px',
-          height: '40px',
-          borderRadius: '50%',
-          background: `linear-gradient(135deg, ${topicColor}, ${topicColor}dd)`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#fff',
-          fontSize: '18px',
-          flexShrink: 0,
-          boxShadow: `0 4px 15px ${topicColor}40`,
-        }}>
-          {tweet.user.charAt(1).toUpperCase()}
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
-            <div>
-              <div style={{ fontSize: '13px', fontWeight: '700', color: colors.text }}>{tweet.user}</div>
-              <div style={{ fontSize: '11px', color: colors.textSecondary }}>{tweet.name}</div>
-            </div>
-            <div style={{ fontSize: '10px', color: colors.textSecondary, whiteSpace: 'nowrap' }}>{tweet.time}</div>
-          </div>
-        </div>
-      </div>
-
-      <div style={{ fontSize: '13px', lineHeight: '1.6', color: colors.text, marginBottom: '10px' }}>
-        {tweet.text}
-      </div>
-
-      <div style={{
-        display: 'flex',
-        gap: '16px',
-        fontSize: '11px',
-        color: colors.textSecondary,
-        borderTop: `1px solid ${colors.cardBorder}`,
-        paddingTop: '8px',
-      }}>
-        <span>💬 {(tweet.likes / 1000).toFixed(1)}K</span>
-        <span>🔁 {(tweet.retweets / 1000).toFixed(1)}K</span>
-        <span>❤️ {tweet.views || 'Like'}</span>
-      </div>
-    </div>
-  );
 
   return (
     <div style={{
       background: colors.bg,
-      color: colors.text,
       minHeight: '100vh',
-      fontFamily: "'Segoe UI', 'Helvetica Neue', sans-serif",
-      position: 'relative',
-      overflow: 'hidden',
+      color: colors.text,
+      fontFamily: "'Segoe UI', sans-serif",
     }}>
-      {/* Glossy background effect */}
-      <div style={{
-        position: 'fixed',
-        top: '-50%',
-        right: '-10%',
-        width: '500px',
-        height: '500px',
-        borderRadius: '50%',
-        background: isDark ? 'rgba(0, 212, 255, 0.05)' : 'rgba(0, 100, 200, 0.05)',
-        filter: 'blur(80px)',
-        pointerEvents: 'none',
-      }} />
-
       <style jsx>{`
-        * { box-sizing: border-box; }
-        
-        .header {
-          position: sticky;
-          top: 0;
-          z-index: 100;
-          backdrop-filter: blur(20px);
-          border-bottom: 1px solid ${colors.cardBorder};
-          padding: 14px;
-        }
-
-        .header-top {
+        .liquid-header {
+          padding: 16px;
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 12px;
+          backdrop-filter: blur(20px);
+          border-bottom: 1px solid ${colors.border};
         }
-
-        .bot-title {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .bot-name {
-          font-size: 18px;
-          font-weight: 800;
-          background: ${colors.accent};
+        .liquid-logo {
+          font-size: 20px;
+          font-weight: 900;
+          background: linear-gradient(135deg, #00d4ff, #0099ff);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
-          letter-spacing: -0.5px;
         }
-
         .mode-toggle {
-          background: ${colors.accentLight};
-          border: 1.5px solid ${colors.cardBorder};
+          background: ${colors.card};
+          border: 1px solid ${colors.border};
           color: ${colors.text};
           width: 40px;
           height: 40px;
-          border-radius: 12px;
+          border-radius: 10px;
           cursor: pointer;
           font-size: 18px;
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all 0.3s ease;
+          transition: all 0.3s;
           backdrop-filter: blur(10px);
         }
-
-        .mode-toggle:active {
-          transform: scale(0.95);
-          background: ${colors.accentLight};
-        }
-
-        .tabs {
-          display: flex;
-          gap: 6px;
-          overflow-x: auto;
-          padding-bottom: 8px;
-        }
-
-        .tab {
-          flex: 1;
-          padding: '8px 12px;
-          background: ${colors.accentLight};
-          border: 1.5px solid transparent;
-          color: ${colors.text};
-          font-size: 12px;
-          font-weight: 600;
-          cursor: pointer;
-          border-radius: 10px;
-          white-space: nowrap;
-          transition: all 0.3s ease;
+        .liquid-card {
+          background: ${colors.card};
+          border: 1px solid ${colors.border};
+          border-radius: 14px;
+          padding: 14px;
+          margin: 10px;
           backdrop-filter: blur(10px);
+          transition: all 0.3s;
         }
-
-        .tab.active {
-          border-color: #00d4ff;
-          background: rgba(0, 212, 255, 0.15);
-          color: #00d4ff;
-          box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
-        }
-
-        .notification {
-          position: fixed;
-          top: 80px;
-          left: 50%;
-          transform: translateX(-50%);
-          background: linear-gradient(135deg, #00d4ff, #0099ff);
-          color: #000;
-          padding: 10px 20px;
-          border-radius: 20px;
-          font-size: 12px;
-          font-weight: 700;
-          z-index: 999;
-          animation: slideDown 0.3s ease;
-          box-shadow: 0 8px 32px rgba(0, 212, 255, 0.3);
-        }
-
-        @keyframes slideDown {
-          from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-          to { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-
-        .section-header {
-          padding: 16px 14px 8px;
-          font-size: 15px;
-          font-weight: 700;
-          background: ${colors.accentLight};
-          margin-top: 12px;
-          border-radius: 12px;
-          margin-left: 14px;
-          margin-right: 14px;
-        }
-
-        .loading {
-          text-align: center;
-          padding: 40px 20px;
-          color: ${colors.textSecondary};
-        }
-
-        .loader {
-          display: inline-block;
-          width: 30px;
-          height: 30px;
-          border: 3px solid ${colors.accentLight};
-          border-radius: 50%;
-          border-top-color: #00d4ff;
-          animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
+        .liquid-card:active { background: rgba(0, 212, 255, 0.15); }
+        .tweet-text { font-size: 13px; color: ${colors.text}; line-height: 1.6; }
+        .tweet-meta { font-size: 11px; color: ${colors.textSecondary}; margin-top: 8px; }
+        .nav { display: flex; justify-content: space-around; padding: 12px; border-top: 1px solid ${colors.border}; background: ${colors.card}; backdrop-filter: blur(20px); position: sticky; bottom: 0; }
+        .nav-btn { background: none; border: none; color: ${colors.textSecondary}; cursor: pointer; font-size: 20px; transition: color 0.3s; }
+        .nav-btn.active { color: ${colors.accent}; }
       `}</style>
 
-      {/* Header */}
-      <div className="header">
-        <div className="header-top">
-          <div className="bot-title">
-            <span style={{ fontSize: '20px' }}>✨</span>
-            <div className="bot-name">Tweet1fy</div>
-          </div>
-          <button className="mode-toggle" onClick={() => setIsDark(!isDark)} title="Toggle dark/light mode">
-            {isDark ? '☀️' : '🌙'}
-          </button>
-        </div>
-        <div className="tabs">
-          <button className={`tab ${activeTab === 'trending' ? 'active' : ''}`} onClick={() => setActiveTab('trending')}>
-            🌍 Trending
-          </button>
-          <button className={`tab ${activeTab === 'iran' ? 'active' : ''}`} onClick={() => setActiveTab('iran')}>
-            🇮🇷 Iran
-          </button>
-          <button className={`tab ${activeTab === 'news' ? 'active' : ''}`} onClick={() => setActiveTab('news')}>
-            📰 News
-          </button>
-        </div>
+      <div className="liquid-header">
+        <div className="liquid-logo">✨ Tweetify</div>
+        <button className="mode-toggle" onClick={() => setIsDark(!isDark)}>
+          {isDark ? '☀️' : '🌙'}
+        </button>
       </div>
 
-      {/* Notification */}
-      {notification && <div className="notification">{notification}</div>}
-
-      {/* Content */}
-      <div style={{ paddingBottom: 30 }}>
-        {loading ? (
-          <div className="loading">
-            <div className="loader"></div>
-            <p style={{ marginTop: '16px' }}>Loading tweets...</p>
-          </div>
-        ) : tweets ? (
-          <>
-            {activeTab === 'trending' && (
-              <div>
-                <div className="section-header">🌍 World Trending</div>
-                <p style={{ padding: '0 14px', fontSize: '11px', color: colors.textSecondary, marginTop: '4px' }}>
-                  Top trending topics globally
-                </p>
-                {tweets.worldTrending?.map((tweet) => (
-                  <TweetCard key={tweet.id} tweet={tweet} topicColor="#00d4ff" />
-                ))}
+      {activeTab === 'home' && (
+        <div style={{ paddingBottom: '60px' }}>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: colors.textSecondary }}>
+              Loading tweets...
+            </div>
+          ) : tweets.length > 0 ? (
+            tweets.map((tweet, idx) => (
+              <div key={idx} className="liquid-card">
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '8px' }}>
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    background: `linear-gradient(135deg, ${colors.accent}, #0099ff)`,
+                    flexShrink: 0,
+                  }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700 }}>{tweet.user}</div>
+                    <div style={{ fontSize: '11px', color: colors.textSecondary }}>{tweet.time}</div>
+                  </div>
+                </div>
+                <div className="tweet-text">{tweet.text}</div>
+                <div className="tweet-meta">💬 {tweet.likes} ❤️ {tweet.retweets} 🔁</div>
               </div>
-            )}
+            ))
+          ) : (
+            <div style={{ textAlign: 'center', padding: '40px', color: colors.textSecondary }}>
+              No tweets yet
+            </div>
+          )}
+        </div>
+      )}
 
-            {activeTab === 'iran' && (
-              <div>
-                <div className="section-header">🇮🇷 Iran Timeline</div>
-                <p style={{ padding: '0 14px', fontSize: '11px', color: colors.textSecondary, marginTop: '4px' }}>
-                  Top Iran content • Filtered accounts
-                </p>
-                {tweets.iranTimeline?.map((tweet) => (
-                  <TweetCard key={tweet.id} tweet={tweet} topicColor="#ff6b6b" />
-                ))}
-              </div>
-            )}
+      {activeTab === 'search' && <div style={{ padding: '20px', textAlign: 'center', color: colors.textSecondary }}>Search</div>}
+      {activeTab === 'notif' && <div style={{ padding: '20px', textAlign: 'center', color: colors.textSecondary }}>Notifications</div>}
+      {activeTab === 'profile' && <div style={{ padding: '20px', textAlign: 'center', color: colors.textSecondary }}>Profile</div>}
 
-            {activeTab === 'news' && (
-              <div>
-                <div className="section-header">📰 Today's News</div>
-                <p style={{ padding: '0 14px', fontSize: '11px', color: colors.textSecondary, marginTop: '4px' }}>
-                  Breaking news • Updated every 15 min
-                </p>
-                {tweets.news?.map((tweet) => (
-                  <TweetCard key={tweet.id} tweet={tweet} topicColor="#4ecca3" />
-                ))}
-              </div>
-            )}
-          </>
-        ) : null}
-      </div>
-
-      {/* Footer */}
-      <div style={{
-        padding: '20px 14px',
-        textAlign: 'center',
-        color: colors.textSecondary,
-        fontSize: '11px',
-        borderTop: `1px solid ${colors.cardBorder}`,
-        backdropFilter: 'blur(10px)',
-      }}>
-        <div>Powered by <strong style={{ color: '#00d4ff' }}>@Tweet1fy_bot</strong></div>
-        <div style={{ marginTop: 6 }}>✨ Y2K Glossy Design • Real-time Updates</div>
+      <div className="nav">
+        <button className={`nav-btn ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>🏠</button>
+        <button className={`nav-btn ${activeTab === 'search' ? 'active' : ''}`} onClick={() => setActiveTab('search')}>🔍</button>
+        <button className={`nav-btn ${activeTab === 'notif' ? 'active' : ''}`} onClick={() => setActiveTab('notif')}>🔔</button>
+        <button className={`nav-btn ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>👤</button>
       </div>
     </div>
   );
